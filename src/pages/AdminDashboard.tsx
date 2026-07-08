@@ -22,6 +22,7 @@ const ORDER_STATUS_DATA = [
 const STATUS_COLORS = ['#FBBF24', '#A78BFA', '#60A5FA', '#34D399'];
 
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
+  const isEditMode = false;
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<any[]>([
     { id: 1, name: 'Isaiah 55:11 Tee', collection: 'Volume I', category: 'T-Shirts', price: '₦15,000', stock: 45, status: 'Active' },

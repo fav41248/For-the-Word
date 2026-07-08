@@ -18,6 +18,7 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,6 +45,41 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
       subscription.unsubscribe();
     };
   }, [isOpen, onLoginSuccess]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!email) {
+      setError('Please enter your email address.');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      if (!isSupabaseConfigured) {
+        toast.success('Password reset link sent to your email (Mocked)');
+        setIsForgotPassword(false);
+        setIsLogin(true);
+        setLoading(false);
+        return;
+      }
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Password reset link sent to your email');
+      setIsForgotPassword(false);
+      setIsLogin(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +226,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
     setPassword('');
     setError('');
     setIsLogin(true);
+    setIsForgotPassword(false);
   };
 
   const handleClose = () => {
@@ -224,10 +261,14 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
             <div className="text-center mb-8">
               <img src="/logo.png" alt="FTW" className="h-16 mx-auto mb-3 object-contain" />
               <h2 className="font-playfair text-3xl font-bold text-dark-text">
-                {isLogin ? 'Welcome Back' : 'Create an Account'}
+                {isForgotPassword ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create an Account'}
               </h2>
               <p className="font-inter text-sm text-dark-text/60 mt-2">
-                {isLogin ? 'Sign in to access your dashboard and designs.' : 'Join us and start wearing the Word.'}
+                {isForgotPassword 
+                  ? 'Enter your email to receive a password reset link.' 
+                  : isLogin 
+                    ? 'Sign in to access your dashboard and designs.' 
+                    : 'Join us and start wearing the Word.'}
               </p>
             </div>
 
@@ -236,120 +277,158 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                 {error}
               </div>
             )}
-
-            <form className="space-y-4" onSubmit={handleAuth}>
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <label className="block font-inter text-sm font-medium text-dark-text mb-1">Full Name</label>
+            
+            {isForgotPassword ? (
+              <form className="space-y-4" onSubmit={handleForgotPassword}>
+                <div>
+                  <label className="block font-inter text-sm font-medium text-dark-text mb-1">Email</label>
                   <input 
-                    type="text" 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter"
-                    placeholder="Grace Osei"
-                    required={!isLogin}
-                  />
-                </motion.div>
-              )}
-              <div>
-                <label className="block font-inter text-sm font-medium text-dark-text mb-1">Email</label>
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter"
-                  placeholder="hello@fortheword.com"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block font-inter text-sm font-medium text-dark-text mb-1">Password</label>
-                <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter pr-12"
-                    placeholder="••••••••"
+                    placeholder="hello@fortheword.com"
                     required
                   />
-                  <button 
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-text/50 hover:text-dark-text"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded border-sky-blue text-teal-primary focus:ring-teal-primary cursor-pointer accent-teal-primary" />
-                  <span className="font-inter text-sm text-dark-text/70 group-hover:text-dark-text transition-colors">Remember me</span>
-                </label>
-                {isLogin && (
-                  <button type="button" className="font-inter text-sm text-teal-primary hover:underline">
-                    Forgot password?
-                  </button>
+                
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-teal-primary text-white font-inter font-bold py-3.5 rounded-lg hover:bg-dark-teal transition-colors mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                >
+                  {loading && (
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Send Reset Link
+                </button>
+                
+                <button 
+                  type="button"
+                  onClick={() => setIsForgotPassword(false)}
+                  className="w-full mt-4 text-center text-sm font-inter text-dark-text/70 hover:text-dark-text transition-colors"
+                >
+                  Back to Login
+                </button>
+              </form>
+            ) : (
+              <form className="space-y-4" onSubmit={handleAuth}>
+                {!isLogin && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <label className="block font-inter text-sm font-medium text-dark-text mb-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter"
+                      placeholder="Grace Osei"
+                      required={!isLogin}
+                    />
+                  </motion.div>
                 )}
-              </div>
-              
-              <button 
-                type="submit"
-                disabled={loading}
-                className="w-full bg-teal-primary text-white font-inter font-bold py-3.5 rounded-lg hover:bg-dark-teal transition-colors mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-              >
-                {loading && (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <div>
+                  <label className="block font-inter text-sm font-medium text-dark-text mb-1">Email</label>
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter"
+                    placeholder="hello@fortheword.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block font-inter text-sm font-medium text-dark-text mb-1">Password</label>
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none transition-all font-inter pr-12"
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-text/50 hover:text-dark-text"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" className="w-4 h-4 rounded border-sky-blue text-teal-primary focus:ring-teal-primary cursor-pointer accent-teal-primary" />
+                    <span className="font-inter text-sm text-dark-text/70 group-hover:text-dark-text transition-colors">Remember me</span>
+                  </label>
+                  {isLogin && (
+                    <button type="button" onClick={() => setIsForgotPassword(true)} className="font-inter text-sm text-teal-primary hover:underline">
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-teal-primary text-white font-inter font-bold py-3.5 rounded-lg hover:bg-dark-teal transition-colors mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                >
+                  {loading && (
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {isLogin ? 'Login' : 'Create Account'}
+                </button>
+              </form>
+            )}
+            
+            {!isForgotPassword && (
+              <>
+                <div className="my-6 flex items-center gap-4">
+                  <div className="h-px bg-sky-blue flex-1"></div>
+                  <span className="font-inter text-xs text-dark-text/50 uppercase tracking-wider">or</span>
+                  <div className="h-px bg-sky-blue flex-1"></div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="w-full bg-white border border-gray-300 text-dark-text font-inter font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                )}
-                {isLogin ? 'Login' : 'Create Account'}
-              </button>
-            </form>
-
-            <div className="my-6 flex items-center gap-4">
-              <div className="h-px bg-sky-blue flex-1"></div>
-              <span className="font-inter text-xs text-dark-text/50 uppercase tracking-wider">or</span>
-              <div className="h-px bg-sky-blue flex-1"></div>
-            </div>
-
-            <button 
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full bg-white border border-gray-300 text-dark-text font-inter font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Continue with Google
-            </button>
-
-            <p className="mt-8 text-center font-inter text-sm text-dark-text/70">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button 
-                className="text-teal-primary font-medium hover:underline"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                }}
-              >
-                {isLogin ? 'Sign up' : 'Login'}
-              </button>
-            </p>
+                  Continue with Google
+                </button>
+                <p className="mt-8 text-center font-inter text-sm text-dark-text/70">
+                  {isLogin ? "Don't have an account? " : "Already have an account? "}
+                  <button 
+                    className="text-teal-primary font-medium hover:underline"
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      setError('');
+                    }}
+                  >
+                    {isLogin ? 'Sign up' : 'Login'}
+                  </button>
+                </p>
+              </>
+            )}
           </motion.div>
         </div>
       )}
     </AnimatePresence>
   );
 }
-

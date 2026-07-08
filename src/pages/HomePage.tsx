@@ -1,19 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Search, Flame, ArrowRight, ShoppingBag, Ruler, Heart } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
 import { useProducts } from '../hooks/useProducts';
 
 import { FAQ } from '../components/FAQ';
 
 export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = new Set(), toggleWishlist }: { onNavigate: (page: string) => void, onAddToCart: (product: any) => void, onOpenSizeGuide: () => void, wishlist?: Set<string>, toggleWishlist?: (id: string) => void }) {
   const [currentImageSet, setCurrentImageSet] = useState(0);
+  
+  // 3D Tilt Effect
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+  
+  const springConfig = { damping: 25, stiffness: 300, mass: 0.5 };
+  const smoothMouseX = useSpring(mouseX, springConfig);
+  const smoothMouseY = useSpring(mouseY, springConfig);
+  
+  const rotateX = useTransform(smoothMouseY, [0, 1], [15, -15]);
+  const rotateY = useTransform(smoothMouseX, [0, 1], [-15, 15]);
+  
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+  
+  const handleMouseLeave = () => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  };
   const { products } = useProducts();
 
   // Manually define the images to show in the hero carousel
   const uniqueImages = [
     "/redeemed.png",
     "/salt-light.png",
-    "/walk-by-faith.png"
+    "/walk-by-faith.png",
+    "/hoodie.png",
+    "/tee.png",
+    "/walk.png"
   ];
 
   useEffect(() => {
@@ -93,13 +120,27 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
               animate={{ y: [0, -15, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               className="relative w-64 sm:w-80 md:w-96 h-72 sm:h-80 md:h-[400px] z-30"
+              style={{ perspective: 1000 }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
             >
-              <img 
-                key={`carousel-${currentImageSet}`}
-                src={uniqueImages[currentImageSet % uniqueImages.length] || "/redeemed.png"} 
-                alt="Featured Product" 
-                className="absolute inset-0 w-full h-full object-contain drop-shadow-2xl transition-opacity duration-500"
-              />
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={`carousel-${currentImageSet}`}
+                  src={uniqueImages[currentImageSet % uniqueImages.length] || "/redeemed.png"} 
+                  alt="Featured Product"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                  className="absolute inset-0 w-full h-full object-contain drop-shadow-2xl"
+                  style={{ 
+                    transformStyle: "preserve-3d",
+                    rotateX,
+                    rotateY
+                  }}
+                />
+              </AnimatePresence>
             </motion.div>
 
             {/* Slider Dots */}

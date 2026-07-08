@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Palette, Heart, Flame, Trash2 } from 'lucide-react';
+import { ShoppingBag, Palette, Heart, Flame, Trash2, Star, Anchor, Sun, Sparkles, Feather, Crown, Shield } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
 
@@ -27,14 +28,18 @@ const VERSE_REFERENCES = [
   "Isaiah 41:10"
 ];
 
-const MOCK_ORDERS = [
-  { id: "#FTW-1042", collection: "Volume I", status: "Delivered", date: "Oct 12, 2023", amount: "₦28,000" },
-  { id: "#FTW-1089", collection: "Volume II", status: "Shipped", date: "Nov 05, 2023", amount: "₦15,000" },
-  { id: "#FTW-1102", collection: "Volume III", status: "Processing", date: "Nov 28, 2023", amount: "₦43,000" },
-];
+
 
 export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWishlist, onAddToCart }: UserDashboardProps) {
   const [activeTab, setActiveTab] = useState('orders');
+  const [displayName, setDisplayName] = useState(user?.name || '');
+  const [selectedAvatar, setSelectedAvatar] = useState(() => {
+    return localStorage.getItem(`ftw_avatar_${user?.email}`) || 'Heart';
+  });
+
+  const ICONS: Record<string, React.ElementType> = {
+    Heart, Flame, Star, Anchor, Sun, Sparkles, Feather, Crown, Shield
+  };
   const { products } = useProducts();
   const savedProducts = products.filter(p => wishlist.has(p.id));
   const [todayVerse, setTodayVerse] = useState({ text: "Loading verse...", reference: "" });
@@ -65,36 +70,17 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
           <div>
             <h2 className="font-bebas text-2xl text-dark-text mb-6">My Orders</h2>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-inter border-collapse">
-                <thead>
-                  <tr className="border-b border-sky-blue/50 text-dark-text/60 text-sm">
-                    <th className="py-4 px-4 font-medium">Order #</th>
-                    <th className="py-4 px-4 font-medium">Collection</th>
-                    <th className="py-4 px-4 font-medium">Status</th>
-                    <th className="py-4 px-4 font-medium">Date</th>
-                    <th className="py-4 px-4 font-medium">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK_ORDERS.map((order) => (
-                    <tr key={order.id} className="border-b border-sky-blue/30 hover:bg-beige/30 transition-colors">
-                      <td className="py-4 px-4 font-medium text-dark-text">{order.id}</td>
-                      <td className="py-4 px-4 text-dark-text/80">{order.collection}</td>
-                      <td className="py-4 px-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                          order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-dark-text/80 text-sm">{order.date}</td>
-                      <td className="py-4 px-4 font-bebas text-lg tracking-wider text-dark-text">{order.amount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="bg-white rounded-2xl border border-sky-blue/30 p-12 text-center shadow-sm">
+              <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="font-playfair text-xl text-dark-text mb-2">No orders found</h3>
+              <p className="font-inter text-gray-500 mb-6">You haven't placed any orders yet.</p>
+              <button 
+                onClick={() => onNavigate('collections')}
+                className="bg-teal-primary text-white font-inter font-medium px-6 py-3 rounded-xl hover:bg-dark-teal transition-colors"
+              >
+                Start Shopping
+              </button>
+            </div>
             </div>
           </div>
         );
@@ -102,19 +88,16 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
         return (
           <div>
             <h2 className="font-bebas text-2xl text-dark-text mb-6">My Designs</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-beige rounded-xl p-4 border border-sky-blue/30">
-                  <div className="aspect-square bg-white rounded-lg flex items-center justify-center mb-4 border border-sky-blue/50 shadow-sm relative overflow-hidden group">
-                    <span className="font-dancing text-teal-primary/30 text-3xl">Design {i}</span>
-                    <div className="absolute inset-0 bg-dark-text/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button className="bg-white text-dark-text font-inter font-medium px-4 py-2 rounded-lg text-sm shadow-sm hover:bg-gray-50">View Details</button>
-                    </div>
-                  </div>
-                  <h3 className="font-inter font-bold text-dark-text">Custom Creation #{i}</h3>
-                  <p className="font-inter text-xs italic text-teal-primary mt-1">Generated via AI</p>
-                </div>
-              ))}
+            <div className="bg-white rounded-2xl border border-sky-blue/30 p-12 text-center shadow-sm">
+              <Palette className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="font-playfair text-xl text-dark-text mb-2">No generated designs yet</h3>
+              <p className="font-inter text-gray-500 mb-6">Start designing your own custom apparel.</p>
+              <button 
+                onClick={() => onNavigate('aigenerator')}
+                className="bg-teal-primary text-white font-inter font-medium px-6 py-3 rounded-xl hover:bg-dark-teal transition-colors"
+              >
+                Go to AI Generator
+              </button>
             </div>
           </div>
         );
@@ -176,28 +159,67 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
         return (
           <div className="max-w-2xl">
             <h2 className="font-bebas text-2xl text-dark-text mb-6">Profile Settings</h2>
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <form className="space-y-6" onSubmit={(e) => {
+              e.preventDefault();
+              localStorage.setItem(`ftw_avatar_${user?.email}`, selectedAvatar);
+              // Also update user's name in localStorage if needed (mocked)
+              if (displayName) {
+                const stored = localStorage.getItem('ftw_user');
+                if (stored) {
+                  try {
+                    const parsed = JSON.parse(stored);
+                    parsed.name = displayName;
+                    localStorage.setItem('ftw_user', JSON.stringify(parsed));
+                  } catch (err) {}
+                }
+              }
+              toast.success('Profile updated successfully!');
+            }}>
+              <div className="space-y-6">
                 <div>
-                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Full Name</label>
-                  <input type="text" defaultValue={user?.name || ''} className="w-full px-4 py-3 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none font-inter" />
+                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Display Name</label>
+                  <input 
+                    type="text" 
+                    value={displayName} 
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none font-inter" 
+                  />
                 </div>
+                
                 <div>
-                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Email Address</label>
-                  <input type="email" defaultValue={user?.email || ''} className="w-full px-4 py-3 rounded-lg border border-sky-blue bg-gray-50 outline-none font-inter text-dark-text/70" disabled />
+                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Select Faith Avatar</label>
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                    {Object.entries(ICONS).map(([name, Icon]) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setSelectedAvatar(name)}
+                        className={`aspect-square flex items-center justify-center rounded-xl border-2 transition-all ${
+                          selectedAvatar === name 
+                            ? 'border-teal-primary bg-teal-primary/10 text-teal-primary' 
+                            : 'border-sky-blue/30 bg-white text-dark-text/40 hover:border-teal-primary/50 hover:text-teal-primary'
+                        }`}
+                      >
+                        <Icon size={24} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Phone Number</label>
-                  <input type="tel" placeholder="+234" className="w-full px-4 py-3 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none font-inter" />
-                </div>
-                <div>
-                  <label className="block font-inter text-sm font-medium text-dark-text mb-2">Country</label>
-                  <select className="w-full px-4 py-3 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none font-inter bg-white">
-                    <option>Nigeria</option>
-                    <option>United Kingdom</option>
-                    <option>United States</option>
-                    <option>Ghana</option>
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
+                  <div>
+                    <label className="block font-inter text-sm font-medium text-dark-text mb-2">Email Address</label>
+                    <input type="email" defaultValue={user?.email || ''} className="w-full px-4 py-3 rounded-lg border border-sky-blue bg-gray-50 outline-none font-inter text-dark-text/70" disabled />
+                  </div>
+                  <div>
+                    <label className="block font-inter text-sm font-medium text-dark-text mb-2">Country</label>
+                    <select className="w-full px-4 py-3 rounded-lg border border-sky-blue focus:border-teal-primary focus:ring-1 focus:ring-teal-primary outline-none font-inter bg-white">
+                      <option>Nigeria</option>
+                      <option>United Kingdom</option>
+                      <option>United States</option>
+                      <option>Ghana</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               
@@ -238,8 +260,12 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
       <div className="mb-12">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="font-playfair text-4xl md:text-5xl text-dark-text mb-2">
-              Welcome back, {user?.name || 'Believer'} 🙏
+            <h1 className="font-playfair text-4xl md:text-5xl text-dark-text mb-2 flex items-center gap-4">
+              Welcome back, {displayName || user?.name || 'Believer'}
+              {(() => {
+                const IconComponent = ICONS[selectedAvatar];
+                return IconComponent ? <span className="bg-teal-primary/10 text-teal-primary p-2 rounded-full"><IconComponent size={28} /></span> : null;
+              })()}
             </h1>
             <p className="font-inter text-dark-text/70 text-lg">Keep wearing the Word.</p>
           </div>
@@ -274,7 +300,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
             <ShoppingBag size={24} />
           </div>
           <div>
-            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">3</p>
+            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">0</p>
             <p className="font-inter text-sm text-dark-text/70">Orders placed</p>
           </div>
         </div>
@@ -283,7 +309,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
             <Palette size={24} />
           </div>
           <div>
-            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">7</p>
+            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">0</p>
             <p className="font-inter text-sm text-dark-text/70">Designs created</p>
           </div>
         </div>
@@ -292,7 +318,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
             <Heart size={24} />
           </div>
           <div>
-            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">5</p>
+            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">{savedProducts.length}</p>
             <p className="font-inter text-sm text-dark-text/70">Saved items</p>
           </div>
         </div>
@@ -301,7 +327,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
             <Flame size={24} />
           </div>
           <div>
-            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">4</p>
+            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">1</p>
             <p className="font-inter text-sm text-dark-text/70">Day scripture streak</p>
           </div>
         </div>

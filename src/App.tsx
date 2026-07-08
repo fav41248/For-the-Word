@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { Toaster, toast } from 'react-hot-toast';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
 import { LoginModal } from './components/LoginModal';
+import { ResetPasswordModal } from './components/ResetPasswordModal';
 import { CartDrawer } from './components/CartDrawer';
 import { SizeGuideModal } from './components/SizeGuideModal';
 import { HomePage } from './pages/HomePage';
@@ -22,10 +24,60 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      const saved = localStorage.getItem(`ftw_wishlist_${currentUser.email}`);
+      if (saved) setWishlist(new Set(JSON.parse(saved)));
+    }
+  }, [currentUser?.email]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const userData: User = { 
+          email: session.user.email || '', 
+          role: 'user', 
+          name: session.user.user_metadata?.name || 'Believer' 
+        };
+        setCurrentUser(userData);
+      }
+    });
+
+    // Listen for auth changes (e.g. login, logout, oauth callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResetPasswordModalOpen(true);
+      }
+      
+      if (session?.user) {
+        const userData: User = { 
+          email: session.user.email || '', 
+          role: 'user', 
+          name: session.user.user_metadata?.name || 'Believer' 
+        };
+        setCurrentUser(userData);
+        // Optionally navigate to dashboard on login
+        if (event === 'SIGNED_IN') {
+           setCurrentPage('userdashboard');
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   const [wishlist, setWishlist] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('ftw_wishlist');
     return saved ? new Set(JSON.parse(saved)) : new Set();
@@ -41,7 +93,7 @@ export default function App() {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
-      localStorage.setItem('ftw_wishlist', JSON.stringify(Array.from(next)));
+      localStorage.setItem(`ftw_wishlist_${currentUser.email}`, JSON.stringify(Array.from(next)));
       return next;
     });
   };
@@ -87,16 +139,30 @@ export default function App() {
         return <WhyChooseUsPage />;
       case 'userdashboard':
         if (!currentUser) {
-          setTimeout(() => setCurrentPage('home'), 0);
+          setTimeout(() => {
+             setCurrentPage('home');
+             setIsLoginModalOpen(true);
+          }, 0);
           return null;
         }
         return <UserDashboard user={currentUser} onNavigate={setCurrentPage} wishlist={wishlist} toggleWishlist={toggleWishlist} onAddToCart={addToCart} />;
       case 'admindashboard':
         if (currentUser?.role !== 'admin') {
-          setTimeout(() => setCurrentPage('home'), 0);
+          setTimeout(() => {
+             setCurrentPage('home');
+             if (!currentUser) setIsLoginModalOpen(true);
+          }, 0);
           return null;
         }
-        return <AdminDashboard user={currentUser} onLogout={() => { setCurrentUser(null); setCurrentPage('home'); }} />;
+        return <AdminDashboard user={currentUser} onLogout={async () => { 
+          if (isSupabaseConfigured) await supabase.auth.signOut();
+          setCurrentUser(null); 
+          setCurrentPage('home'); 
+          localStorage.removeItem('ftw_user');
+          localStorage.removeItem('ftw_wishlist');
+          localStorage.removeItem('ftw_avatar');
+          setWishlist(new Set());
+        }} />;
       default:
         return <HomePage onNavigate={setCurrentPage} onAddToCart={addToCart} onOpenSizeGuide={() => setIsSizeGuideOpen(true)} wishlist={wishlist} toggleWishlist={toggleWishlist} />;
     }
@@ -121,10 +187,16 @@ export default function App() {
           cartItemCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
           openCart={() => setIsCartOpen(true)}
           user={currentUser}
-          onLogout={() => {
+          onLogout={async () => {
+            if (isSupabaseConfigured) {
+              await supabase.auth.signOut();
+            }
             setCurrentUser(null);
             setCurrentPage('home');
             localStorage.removeItem('ftw_user');
+            localStorage.removeItem('ftw_wishlist');
+            localStorage.removeItem('ftw_avatar');
+            setWishlist(new Set());
             toast.success('Logged out successfully');
           }}
         />
@@ -151,6 +223,15 @@ export default function App() {
         isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+      
+      <ResetPasswordModal 
+        isOpen={isResetPasswordModalOpen} 
+        onClose={() => setIsResetPasswordModalOpen(false)}
+        onSuccess={() => {
+          setIsResetPasswordModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
       />
       
       <CartDrawer 
