@@ -1,0 +1,6 @@
+{
+  "name": "For The Word",
+  "description": "Faith-Tech Lifestyle Brand - Every Shirt Is A Sermon.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

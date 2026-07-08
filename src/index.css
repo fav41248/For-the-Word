@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script:wght@700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-teal-primary: #567C8D;
+  --color-sky-blue: #C8D9E6;
+  --color-beige: #F5EFEB;
+  --color-dark-teal: #3A5A6B;
+  --color-dark-text: #1A1A2E;
+  
+  --font-playfair: 'Playfair Display', serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-dancing: 'Dancing Script', cursive;
+
+  --animate-marquee: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+html, body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-beige);
+  color: var(--color-dark-text);
+}
