@@ -4,9 +4,12 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { useProducts } from '../hooks/useProducts';
 
 import { FAQ } from '../components/FAQ';
+import { QuickViewModal } from '../components/QuickViewModal';
+import { Product } from '../types';
 
 export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = new Set(), toggleWishlist }: { onNavigate: (page: string) => void, onAddToCart: (product: any) => void, onOpenSizeGuide: () => void, wishlist?: Set<string>, toggleWishlist?: (id: string) => void }) {
   const [currentImageSet, setCurrentImageSet] = useState(0);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   
   // 3D Tilt Effect
   const mouseX = useMotionValue(0.5);
@@ -35,12 +38,12 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
 
   // Manually define the images to show in the hero carousel
   const uniqueImages = [
-    "/redeemed.png",
-    "/salt-light.png",
-    "/walk-by-faith.png",
-    "/hoodie.png",
-    "/tee.png",
-    "/walk.png"
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/redeemed_mosnvw.png',
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/salt-light_owqoe5.png',
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/walk-by-faith_mpyjek.png',
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580257/hoodie_ur6d3q.png',
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/tee_tpppm4.png',
+    'https://res.cloudinary.com/duwpkzkg1/image/upload/walk_uefuay.png'
   ];
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
               <AnimatePresence mode="wait">
                 <motion.img 
                   key={`carousel-${currentImageSet}`}
-                  src={uniqueImages[currentImageSet % uniqueImages.length] || "/redeemed.png"} 
+                  src={uniqueImages[currentImageSet % uniqueImages.length] || 'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/redeemed_mosnvw.png'} 
                   alt="Featured Product"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -200,7 +203,7 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
               className="bg-teal-primary rounded-2xl text-white relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300 flex flex-col"
             >
               <div className="h-48 overflow-hidden relative">
-                <img src="/redeemed.png" alt="Volume I Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
+                <img src={'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/redeemed_mosnvw.png'} alt="Volume I Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-teal-primary via-teal-primary/20 to-transparent"></div>
               </div>
               <div className="relative z-10 flex-grow px-6 pb-6 -mt-12">
@@ -227,7 +230,7 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
               className="bg-dark-teal rounded-2xl text-white relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300 flex flex-col"
             >
               <div className="h-48 overflow-hidden relative">
-                <img src="/salt-light.png" alt="Volume II Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
+                <img src={'https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580258/salt-light_owqoe5.png'} alt="Volume II Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-dark-teal via-dark-teal/20 to-transparent"></div>
               </div>
               <div className="relative z-10 flex-grow px-6 pb-6 -mt-12">
@@ -254,7 +257,7 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
               className="bg-[#1A1A2E] rounded-2xl text-white relative overflow-hidden group hover:-translate-y-2 transition-transform duration-300 flex flex-col"
             >
               <div className="h-48 overflow-hidden relative">
-                <img src="/walk-by-faith.png" alt="Volume III Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
+                <img src={'https://res.cloudinary.com/duwpkzkg1/image/upload/walk-by-faith_mpyjek.png'} alt="Volume III Tee" className="w-full h-full object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E] via-[#1A1A2E]/20 to-transparent"></div>
               </div>
               <div className="relative z-10 flex-grow px-6 pb-6 -mt-12">
@@ -336,7 +339,7 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
                         <Ruler size={20} />
                       </button>
                       <button 
-                        onClick={() => onAddToCart(product)}
+                        onClick={() => setQuickViewProduct(product)}
                         className="bg-teal-primary text-white p-2.5 rounded-xl hover:bg-dark-teal transition-colors flex items-center gap-2"
                       >
                         <ShoppingBag size={18} />
@@ -440,42 +443,16 @@ export function HomePage({ onNavigate, onAddToCart, onOpenSizeGuide, wishlist = 
       </section>
 
       {/* FAQ Section */}
+      
       <FAQ />
 
-      {/* Newsletter */}
-      <section className="py-24 bg-gradient-to-br from-teal-primary to-dark-teal relative overflow-hidden">
-        {/* Abstract pattern */}
-        <div className="absolute inset-0 opacity-10">
-           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <h2 className="font-playfair text-4xl md:text-5xl text-white mb-4">Join the Word Movement</h2>
-          <p className="font-inter text-white/80 text-lg mb-10">Get early access to drops, scripture designs, and community updates.</p>
-          
-          <form className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto" onSubmit={(e) => e.preventDefault()}>
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              className="flex-grow bg-white/10 border border-white/30 text-white placeholder-white/50 px-6 py-4 rounded-xl focus:outline-none focus:border-white focus:bg-white/20 transition-all font-inter"
-              required
-            />
-            <button 
-              type="submit"
-              className="bg-white text-teal-primary font-inter font-bold px-8 py-4 rounded-xl hover:bg-sky-blue transition-colors whitespace-nowrap"
-            >
-              Join Now
-            </button>
-          </form>
-        </div>
-      </section>
+      <QuickViewModal 
+        isOpen={!!quickViewProduct} 
+        onClose={() => setQuickViewProduct(null)} 
+        product={quickViewProduct}
+        onAddToCart={onAddToCart}
+        onOpenSizeGuide={onOpenSizeGuide}
+      />
     </div>
   );
 }

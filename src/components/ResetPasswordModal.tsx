@@ -70,7 +70,7 @@ export function ResetPasswordModal({ isOpen, onClose, onSuccess }: ResetPassword
             </button>
             
             <div className="text-center mb-8">
-              <img src="/logo.png" alt="FTW" className="h-16 mx-auto mb-3 object-contain" />
+              <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-16 mx-auto mb-3 object-contain" />
               <h2 className="font-playfair text-3xl font-bold text-dark-text">
                 Set New Password
               </h2>

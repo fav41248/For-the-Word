@@ -32,7 +32,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
       if (session?.user && isOpen) {
         const userData: User = { 
           email: session.user.email || '', 
-          role: 'user', 
+          role: ['admin@ftw.com', 'ayojire1@gmail.com'].includes(session.user.email || '') ? 'admin' : 'user', 
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Believer' 
         };
         localStorage.setItem('ftw_user', JSON.stringify(userData));
@@ -119,7 +119,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
         if (data.user) {
           const userData: User = { 
             email: data.user.email || '', 
-            role: 'user', 
+            role: ['admin@ftw.com', 'ayojire1@gmail.com'].includes(data.user.email || '') ? 'admin' : 'user', 
             name: data.user.user_metadata?.name || 'Believer' 
           };
           localStorage.setItem('ftw_user', JSON.stringify(userData));
@@ -161,7 +161,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
         if (data.user && data.session) {
           const userData: User = { 
             email: data.user.email || '', 
-            role: 'user', 
+            role: ['admin@ftw.com', 'ayojire1@gmail.com'].includes(data.user.email || '') ? 'admin' : 'user', 
             name: name
           };
           localStorage.setItem('ftw_user', JSON.stringify(userData));
@@ -259,7 +259,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
             </button>
             
             <div className="text-center mb-8">
-              <img src="/logo.png" alt="FTW" className="h-16 mx-auto mb-3 object-contain" />
+              <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-16 mx-auto mb-3 object-contain" />
               <h2 className="font-playfair text-3xl font-bold text-dark-text">
                 {isForgotPassword ? 'Reset Password' : isLogin ? 'Welcome Back' : 'Create an Account'}
               </h2>

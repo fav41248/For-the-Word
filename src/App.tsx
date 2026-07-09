@@ -18,6 +18,7 @@ import { AIGeneratorPage } from './pages/AIGeneratorPage';
 import { WhyChooseUsPage } from './pages/WhyChooseUsPage';
 import { UserDashboard } from './pages/UserDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { ShoppingBag } from 'lucide-react';
 import { CartItem, Product, User } from './types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,6 +30,10 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentPage]);
 
   useEffect(() => {
     if (currentUser) {
@@ -45,7 +50,7 @@ export default function App() {
       if (session?.user) {
         const userData: User = { 
           email: session.user.email || '', 
-          role: 'user', 
+          role: ['admin@ftw.com', 'ayojire1@gmail.com'].includes(session.user.email || '') ? 'admin' : 'user', 
           name: session.user.user_metadata?.name || 'Believer' 
         };
         setCurrentUser(userData);
@@ -59,15 +64,16 @@ export default function App() {
       }
       
       if (session?.user) {
+        const isAdmin = ['admin@ftw.com', 'ayojire1@gmail.com'].includes(session.user.email || '');
         const userData: User = { 
           email: session.user.email || '', 
-          role: 'user', 
+          role: isAdmin ? 'admin' : 'user', 
           name: session.user.user_metadata?.name || 'Believer' 
         };
         setCurrentUser(userData);
         // Optionally navigate to dashboard on login
         if (event === 'SIGNED_IN') {
-           setCurrentPage('userdashboard');
+           setCurrentPage(isAdmin ? 'admindashboard' : 'userdashboard');
         }
       } else {
         setCurrentUser(null);
@@ -98,13 +104,13 @@ export default function App() {
     });
   };
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, size: string = "M") => {
     setCartItems(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
+      const existing = prev.find(item => item.product.id === product.id && item.size === size);
       if (existing) {
-        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+        return prev.map(item => (item.product.id === product.id && item.size === size) ? { ...item, quantity: item.quantity + 1 } : item);
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, size }];
     });
     toast.success('Item added to cart');
     setIsCartOpen(true);
@@ -256,6 +262,19 @@ export default function App() {
         isOpen={isSizeGuideOpen} 
         onClose={() => setIsSizeGuideOpen(false)} 
       />
+
+
+      {/* Floating CTA */}
+      {!isAdmin && currentPage !== 'collections' && (
+        <button
+          onClick={() => setCurrentPage('collections')}
+          className="fixed bottom-6 right-6 z-40 bg-teal-primary text-white p-4 rounded-full shadow-2xl hover:bg-dark-teal transition-all hover:scale-105 flex items-center justify-center group"
+          title="Shop Collections"
+        >
+          <span className="font-inter font-semibold max-w-0 overflow-hidden group-hover:max-w-xs group-hover:mr-2 transition-all duration-300 whitespace-nowrap">Shop Collection</span>
+          <ShoppingBag size={24} />
+        </button>
+      )}
 
       <Toaster 
         position="bottom-center" 

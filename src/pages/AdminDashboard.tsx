@@ -7,6 +7,7 @@ import {
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { User, Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
+import { useOrders } from '../hooks/useOrders';
 
 interface AdminDashboardProps {
   user: User;
@@ -22,6 +23,7 @@ const ORDER_STATUS_DATA = [
 const STATUS_COLORS = ['#FBBF24', '#A78BFA', '#60A5FA', '#34D399'];
 
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
+  const { orders, loading: ordersLoading, updateOrderStatus } = useOrders();
   const isEditMode = false;
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<any[]>([
@@ -213,7 +215,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
       <aside className="w-64 bg-[#1A1A2E] text-white flex flex-col h-full shrink-0">
         <div className="p-6">
           <div className="flex items-center">
-            <img src="/logo.png" alt="FTW" className="h-8 mr-2 object-contain" />
+            <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-8 mr-2 object-contain" />
             <span className="font-bebas text-teal-primary tracking-[0.2em] text-lg mt-1">ADMIN</span>
           </div>
         </div>
@@ -388,27 +390,30 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 text-sm">
-                    {[
-                      { id: '#FTW-1105', user: 'David O.', date: 'Oct 24, 2023', status: 'Pending', total: '₦15,000' },
-                      { id: '#FTW-1104', user: 'Sarah M.', date: 'Oct 23, 2023', status: 'Shipped', total: '₦43,000' },
-                      { id: '#FTW-1103', user: 'Emmanuel K.', date: 'Oct 21, 2023', status: 'Delivered', total: '₦28,000' },
-                      { id: '#FTW-1102', user: 'Grace Osei', date: 'Oct 20, 2023', status: 'Processing', total: '₦56,000' },
-                    ].map((order, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="p-4 font-medium text-teal-primary">{order.id}</td>
-                        <td className="p-4 text-dark-text">{order.user}</td>
-                        <td className="p-4 text-gray-500">{order.date}</td>
+                    {ordersLoading ? (
+                      <tr><td colSpan={6} className="text-center p-4">Loading orders...</td></tr>
+                    ) : orders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50">
+                        <td className="p-4 font-medium text-teal-primary">#{order.id.toUpperCase()}</td>
+                        <td className="p-4 text-dark-text">{order.user_email}</td>
+                        <td className="p-4 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                         <td className="p-4">
-                          <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full ${
-                            order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 
-                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' : 
-                            order.status === 'Processing' ? 'bg-purple-100 text-purple-700' : 
+                          <select 
+                            value={order.status}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value as any)}
+                            className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-full border-0 cursor-pointer focus:ring-0 ${
+                            order.status === 'delivered' ? 'bg-green-100 text-green-700' : 
+                            order.status === 'shipped' ? 'bg-blue-100 text-blue-700' : 
+                            order.status === 'processing' ? 'bg-purple-100 text-purple-700' : 
                             'bg-yellow-100 text-yellow-700'
                           }`}>
-                            {order.status}
-                          </span>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                          </select>
                         </td>
-                        <td className="p-4 font-bebas text-lg">{order.total}</td>
+                        <td className="p-4 font-bebas text-lg">₦{(order.total || 0).toLocaleString()}</td>
                         <td className="p-4 text-right">
                           <button className="text-gray-400 hover:text-dark-text"><MoreVertical size={18} /></button>
                         </td>

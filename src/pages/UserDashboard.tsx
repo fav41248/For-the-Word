@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Palette, Heart, Flame, Trash2, Star, Anchor, Sun, Sparkles, Feather, Crown, Shield } from 'lucide-react';
+import { ShoppingBag, Palette, Heart, Flame, Loader2, Trash2, Star, Anchor, Sun, Sparkles, Feather, Crown, Shield } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Product } from '../types';
 import { useProducts } from '../hooks/useProducts';
+import { useOrders } from '../hooks/useOrders';
 
 interface User {
   email: string;
@@ -31,6 +32,7 @@ const VERSE_REFERENCES = [
 
 
 export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWishlist, onAddToCart }: UserDashboardProps) {
+  const { orders, loading: ordersLoading } = useOrders(user?.email);
   const [activeTab, setActiveTab] = useState('orders');
   const [displayName, setDisplayName] = useState(user?.name || '');
   const [selectedAvatar, setSelectedAvatar] = useState(() => {
@@ -66,21 +68,98 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
   const renderTabContent = () => {
     switch (activeTab) {
       case 'orders':
+        if (ordersLoading) {
+          return <div className="flex justify-center items-center h-full py-16"><Loader2 className="w-8 h-8 text-teal-primary animate-spin" /></div>;
+        }
+        if (orders.length === 0) {
+          return (
+            <div>
+              <h2 className="font-bebas text-2xl text-dark-text mb-6">My Orders</h2>
+              <div className="overflow-x-auto">
+                <div className="bg-white rounded-2xl border border-sky-blue/30 p-12 text-center shadow-sm">
+                <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="font-playfair text-xl text-dark-text mb-2">No orders found</h3>
+                <p className="font-inter text-gray-500 mb-6">You haven't placed any orders yet.</p>
+                <button 
+                  onClick={() => onNavigate('collections')}
+                  className="bg-teal-primary text-white font-inter font-medium px-6 py-3 rounded-xl hover:bg-dark-teal transition-colors"
+                >
+                  Start Shopping
+                </button>
+              </div>
+              </div>
+            </div>
+          );
+        }
         return (
           <div>
             <h2 className="font-bebas text-2xl text-dark-text mb-6">My Orders</h2>
-            <div className="overflow-x-auto">
-              <div className="bg-white rounded-2xl border border-sky-blue/30 p-12 text-center shadow-sm">
-              <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="font-playfair text-xl text-dark-text mb-2">No orders found</h3>
-              <p className="font-inter text-gray-500 mb-6">You haven't placed any orders yet.</p>
-              <button 
-                onClick={() => onNavigate('collections')}
-                className="bg-teal-primary text-white font-inter font-medium px-6 py-3 rounded-xl hover:bg-dark-teal transition-colors"
-              >
-                Start Shopping
-              </button>
-            </div>
+            <div className="space-y-6">
+              {orders.map(order => (
+                <div key={order.id} className="border border-sky-blue rounded-xl p-6 bg-gray-50/50 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-inter font-semibold uppercase ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="mb-4 pb-4 border-b border-sky-blue/30">
+                    <p className="font-inter text-xs text-dark-text/50 uppercase tracking-wider mb-1">Order #{order.id.toUpperCase()}</p>
+                    <p className="font-inter text-sm font-medium text-dark-text">{new Date(order.created_at).toLocaleDateString()}</p>
+                    {order.reference && <p className="font-inter text-xs text-dark-text/50 mt-1">Ref: {order.reference}</p>}
+                  </div>
+                  
+                  {/* Progress Tracker */}
+                  <div className="mb-6 py-4 px-2">
+                    <div className="relative">
+                      <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-1 bg-gray-200 rounded-full"></div>
+                      <div className={`absolute top-1/2 -translate-y-1/2 left-0 h-1 bg-teal-primary rounded-full transition-all duration-500 ${
+                        order.status === 'pending' ? 'w-[10%]' :
+                        order.status === 'processing' ? 'w-[40%]' :
+                        order.status === 'shipped' ? 'w-[70%]' :
+                        'w-[100%]'
+                      }`}></div>
+                      
+                      <div className="relative flex justify-between">
+                        {['Pending', 'Processing', 'Shipped', 'Delivered'].map((step, idx) => {
+                          const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
+                          const currentStatusIdx = statusOrder.indexOf(order.status);
+                          const isActive = idx <= currentStatusIdx;
+                          return (
+                            <div key={step} className="flex flex-col items-center">
+                              <div className={`w-4 h-4 rounded-full border-2 bg-white transition-colors duration-300 relative z-10 ${
+                                isActive ? 'border-teal-primary ring-2 ring-teal-primary/20' : 'border-gray-300'
+                              }`}>
+                                {isActive && <div className="absolute inset-0.5 bg-teal-primary rounded-full"></div>}
+                              </div>
+                              <span className={`text-xs mt-2 font-medium ${isActive ? 'text-teal-primary' : 'text-gray-400'}`}>{step}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <img src={item.product.image} alt={item.product.name} className="w-16 h-16 object-contain bg-sky-blue/20 rounded-lg p-2" />
+                        <div>
+                          <p className="font-inter font-bold text-dark-text text-sm">{item.product.name}</p>
+                          <p className="font-inter text-dark-text/60 text-xs">Qty: {item.quantity} {item.size && `• Size: ${item.size}`}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-sky-blue/30 flex justify-between items-center">
+                    <span className="font-inter font-medium text-dark-text">Total</span>
+                    <span className="font-bebas text-xl text-teal-primary">₦{(order.total || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -280,7 +359,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
         
         <div className="bg-teal-primary text-white p-6 md:p-8 rounded-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
-             <img src="/logo.png" alt="FTW" className="h-48 object-contain brightness-0 invert" />
+             <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-48 object-contain brightness-0 invert" />
           </div>
           <div className="relative z-10">
             <span className="font-bebas tracking-widest text-sky-blue text-sm mb-2 block">VERSE OF THE DAY</span>
@@ -300,7 +379,7 @@ export function UserDashboard({ user, onNavigate, wishlist = new Set(), toggleWi
             <ShoppingBag size={24} />
           </div>
           <div>
-            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">0</p>
+            <p className="font-bebas text-3xl text-dark-text leading-none mb-1">{orders.length}</p>
             <p className="font-inter text-sm text-dark-text/70">Orders placed</p>
           </div>
         </div>

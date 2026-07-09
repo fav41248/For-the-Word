@@ -9,7 +9,7 @@ export function Footer() {
           {/* Brand Info */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center">
-              <img src="/logo.png" alt="FTW" className="h-12 object-contain brightness-0 invert" />
+              <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-12 object-contain brightness-0 invert" />
             </div>
             <p className="font-inter text-sm leading-relaxed max-w-xs">
               Faith-driven apparel for a generation that carries the Word everywhere. Every shirt is a sermon.

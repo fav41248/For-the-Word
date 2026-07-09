@@ -47,7 +47,7 @@ export function WhyChooseUsPage() {
             <div className="flex-1 bg-teal-primary p-8 md:p-12 text-white relative overflow-hidden">
               {/* Decorative background element */}
               <div className="absolute top-0 right-0 p-12 opacity-10">
-                <img src="/logo.png" alt="FTW" className="h-48 object-contain brightness-0 invert" />
+                <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-48 object-contain brightness-0 invert" />
               </div>
               <h3 className="font-bebas text-3xl mb-8 text-center tracking-wide relative z-10">For The Word</h3>
               <ul className="space-y-6 relative z-10">

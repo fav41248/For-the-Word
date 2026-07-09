@@ -44,7 +44,7 @@ export function Navigation({ currentPage, setCurrentPage, openLoginModal, cartIt
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => setCurrentPage('home')}>
-              <img src="/logo.png" alt="FTW" className="h-16 object-contain" />
+              <img src="https://res.cloudinary.com/duwpkzkg1/image/upload/v1783580279/LOGO-3_wmie0y.png" alt="FTW" className="h-16 object-contain" />
             </div>
 
             {/* Desktop Nav */}

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { usePaystackPayment } from 'react-paystack';
+import { useOrders } from '../hooks/useOrders';
 import { toast } from 'react-hot-toast';
 import { CartItem, User } from '../types';
 
